@@ -1,4 +1,4 @@
-import os, sys, re, json, sqlite3, requests
+import os, sys, re, json, sqlite3, requests, tempfile
 import pandas as pd
 from typing import Optional, List, Dict, Any, Generator
 from dotenv import load_dotenv
@@ -20,7 +20,16 @@ load_dotenv()
 
 BASE_DIR       = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE_PATH  = os.path.join(BASE_DIR, "College_data.csv")
-DB_FILE_PATH   = os.path.join(BASE_DIR, "colleges.db")
+
+def resolve_db_path() -> str:
+    if os.getenv("DB_FILE_PATH"):
+        return os.environ["DB_FILE_PATH"]
+    # On Vercel / serverless platforms, root directory is read-only. Use /tmp or system temp dir.
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or not os.access(BASE_DIR, os.W_OK):
+        return os.path.join(tempfile.gettempdir(), "colleges.db")
+    return os.path.join(BASE_DIR, "colleges.db")
+
+DB_FILE_PATH   = resolve_db_path()
 STATIC_DIR     = os.path.join(BASE_DIR, "static")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -44,51 +53,66 @@ def clean_float(val):
     except ValueError: return None
 
 def init_database():
-    if not os.path.exists(CSV_FILE_PATH):
-        print("Warning: College_data.csv not found.")
-        return
-    conn = sqlite3.connect(DB_FILE_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='colleges'")
-    if cursor.fetchone():
-        cursor.execute("SELECT COUNT(*) FROM colleges")
-        count = cursor.fetchone()[0]
-        if count > 0:
-            # Ensure indexes exist
-            for col in ["state", "stream", "rating", "ug_fee", "college_name", "placement"]:
-                cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{col} ON colleges ({col})")
-            conn.commit()
-            conn.close()
+    global DB_FILE_PATH
+    try:
+        if not os.path.exists(CSV_FILE_PATH):
+            print("Warning: College_data.csv not found at", CSV_FILE_PATH)
             return
-            
-    print("Populating database from CSV...")
-    df = pd.read_csv(CSV_FILE_PATH)
-    df.columns = [c.strip() for c in df.columns]
-    cursor.execute("""CREATE TABLE IF NOT EXISTS colleges (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        college_name TEXT, state TEXT, stream TEXT,
-        ug_fee REAL, pg_fee REAL, rating REAL,
-        academic REAL, accommodation REAL, faculty REAL,
-        infrastructure REAL, placement REAL, social_life REAL)""")
-    
-    rows = [(str(r.get("College_Name","")).strip(), str(r.get("State","")).strip(),
-             str(r.get("Stream","")).strip(), clean_fee(r.get("UG_fee")),
-             clean_fee(r.get("PG_fee")), clean_float(r.get("Rating")),
-             clean_float(r.get("Academic")), clean_float(r.get("Accommodation")),
-             clean_float(r.get("Faculty")), clean_float(r.get("Infrastructure")),
-             clean_float(r.get("Placement")), clean_float(r.get("Social_Life")))
-            for _, r in df.iterrows()]
-            
-    cursor.executemany("""INSERT INTO colleges (college_name,state,stream,ug_fee,pg_fee,
-        rating,academic,accommodation,faculty,infrastructure,placement,social_life)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", rows)
+
+        # Ensure directory exists for DB_FILE_PATH
+        os.makedirs(os.path.dirname(os.path.abspath(DB_FILE_PATH)), exist_ok=True)
+
+        conn = sqlite3.connect(DB_FILE_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='colleges'")
+        if cursor.fetchone():
+            cursor.execute("SELECT COUNT(*) FROM colleges")
+            count = cursor.fetchone()[0]
+            if count > 0:
+                # Ensure indexes exist
+                for col in ["state", "stream", "rating", "ug_fee", "college_name", "placement"]:
+                    cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{col} ON colleges ({col})")
+                conn.commit()
+                conn.close()
+                return
+                
+        print(f"Populating database from CSV to {DB_FILE_PATH}...")
+        df = pd.read_csv(CSV_FILE_PATH)
+        df.columns = [c.strip() for c in df.columns]
+        cursor.execute("""CREATE TABLE IF NOT EXISTS colleges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            college_name TEXT, state TEXT, stream TEXT,
+            ug_fee REAL, pg_fee REAL, rating REAL,
+            academic REAL, accommodation REAL, faculty REAL,
+            infrastructure REAL, placement REAL, social_life REAL)""")
         
-    for col in ["state", "stream", "rating", "ug_fee", "college_name", "placement"]:
-        cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{col} ON colleges ({col})")
-        
-    conn.commit()
-    conn.close()
-    print(f"Database ready with {len(rows)} colleges.")
+        rows = [(str(r.get("College_Name","")).strip(), str(r.get("State","")).strip(),
+                 str(r.get("Stream","")).strip(), clean_fee(r.get("UG_fee")),
+                 clean_fee(r.get("PG_fee")), clean_float(r.get("Rating")),
+                 clean_float(r.get("Academic")), clean_float(r.get("Accommodation")),
+                 clean_float(r.get("Faculty")), clean_float(r.get("Infrastructure")),
+                 clean_float(r.get("Placement")), clean_float(r.get("Social_Life")))
+                for _, r in df.iterrows()]
+                
+        cursor.executemany("""INSERT INTO colleges (college_name,state,stream,ug_fee,pg_fee,
+            rating,academic,accommodation,faculty,infrastructure,placement,social_life)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""", rows)
+            
+        for col in ["state", "stream", "rating", "ug_fee", "college_name", "placement"]:
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{col} ON colleges ({col})")
+            
+        conn.commit()
+        conn.close()
+        print(f"Database ready with {len(rows)} colleges at {DB_FILE_PATH}.")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
+def get_db_connection():
+    if not os.path.exists(DB_FILE_PATH):
+        init_database()
+    conn = sqlite3.connect(DB_FILE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 init_database()
 
@@ -195,8 +219,7 @@ def extract_entities(query: str) -> Dict[str, Any]:
 # ── 3. QUERY & SMART SCORING ──────────────────────────────────────────────────
 
 def query_colleges(state=None, stream=None, max_fee=None, search_text=None, limit=15) -> List[Dict]:
-    conn = sqlite3.connect(DB_FILE_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     conditions, params = [], []
     
@@ -221,8 +244,7 @@ def query_colleges(state=None, stream=None, max_fee=None, search_text=None, limi
 
 def find_colleges_by_names(names: List[str]) -> List[Dict]:
     if not names: return []
-    conn = sqlite3.connect(DB_FILE_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db_connection()
     cursor = conn.cursor()
     results, seen = [], set()
     
@@ -592,7 +614,7 @@ def get_colleges(
 @app.get("/api/stats")
 def get_stats():
     try:
-        conn = sqlite3.connect(DB_FILE_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM colleges")
         total = cursor.fetchone()[0]
