@@ -32,11 +32,11 @@ def resolve_db_path() -> str:
 DB_FILE_PATH   = resolve_db_path()
 STATIC_DIR     = os.path.join(BASE_DIR, "static")
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL   = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
-FAST_MODEL         = os.getenv("FAST_MODEL", "meta-llama/llama-3.1-8b-instruct")
-YOUR_SITE_URL      = os.getenv("YOUR_SITE_URL", "http://localhost:8000")
-YOUR_APP_NAME      = os.getenv("YOUR_APP_NAME", "Astra-CollegeBot")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_MODEL   = os.getenv("OPENROUTER_MODEL")
+FAST_MODEL         = os.getenv("FAST_MODEL")
+YOUR_SITE_URL      = os.getenv("YOUR_SITE_URL")
+YOUR_APP_NAME      = os.getenv("YOUR_APP_NAME")
 PORT               = int(os.getenv("PORT", 8000))
 HOST               = os.getenv("HOST", "0.0.0.0")
 
