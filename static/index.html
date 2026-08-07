@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTRA — Higher Education AI Counselor & College Directory</title>
+  <meta name="description" content="Enterprise AI-powered admission counseling and verified higher education directory." />
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- Ambient Dynamic Visual Mesh -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <!-- App Shell -->
+  <div class="app-shell">
+    
+    <!-- Top Enterprise Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo-wrap">
+          <div class="brand-logo">
+            <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          </div>
+        </div>
+        <div class="brand-info">
+          <h1>ASTRA <span class="brand-tag">AI Counselor</span></h1>
+          <p class="brand-subtitle">Higher Education Intelligence & College Directory</p>
+        </div>
+      </div>
+
+      <!-- Main 2-Tab Navigation -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="chat-pane" id="tab-btn-chat">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          AI Chatbot
+        </button>
+        <button class="nav-tab" data-tab="matrix-pane" id="tab-btn-matrix">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          College Directory
+        </button>
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <div class="status-pill" title="Live Database Connection Active">
+          <div class="status-dot"></div>
+          <span>6,780+ Colleges Online</span>
+        </div>
+
+        <button class="header-btn danger" id="reset-session-btn" title="Clear Chat History">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Clear Chat
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+
+      <!-- ====================================================================
+           VIEW 1: AI CHATBOT SCREEN
+           ==================================================================== -->
+      <div class="tab-pane active" id="chat-pane">
+        <div class="chat-layout">
+          
+          <!-- Left Query Presets Sidebar -->
+          <aside class="sidebar">
+            <div class="sidebar-top">
+              <div class="sidebar-section-title">
+                <span>Suggested Questions</span>
+                <span class="brand-tag">Instant</span>
+              </div>
+              <div class="prompt-preset-group">
+                <div class="preset-card" onclick="sendPresetQuery('Top Engineering colleges in Tamil Nadu under 8 Lakhs fee')">
+                  <span class="tag">Engineering</span>
+                  <div class="title">Top Engineering in Tamil Nadu under 8L</div>
+                </div>
+                <div class="preset-card" onclick="sendPresetQuery('Compare VIT Vellore vs SRM Kattankulathur in detail')">
+                  <span class="tag">Comparison</span>
+                  <div class="title">VIT Vellore vs SRM Kattankulathur</div>
+                </div>
+                <div class="preset-card" onclick="sendPresetQuery('Best Medical colleges in Karnataka with highest ratings')">
+                  <span class="tag">Medical</span>
+                  <div class="title">Top Medical Institutes in Karnataka</div>
+                </div>
+                <div class="preset-card" onclick="sendPresetQuery('Affordable MBA colleges in Maharashtra with high placement ROI')">
+                  <span class="tag">Management</span>
+                  <div class="title">High Placement MBA in Maharashtra</div>
+                </div>
+                <div class="preset-card" onclick="sendPresetQuery('Best computer science colleges in Delhi NCR with good placement packages')">
+                  <span class="tag">CSE Placement</span>
+                  <div class="title">Top CSE in Delhi NCR</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Chat Center Feed -->
+          <section class="chat-main">
+            <div class="chat-feed" id="chat-feed">
+              
+              <!-- Welcome Hero Card -->
+              <div class="hero-card" id="hero-card">
+                <div class="hero-badge">✨ AI ADMISSIONS COUNSELOR</div>
+                <h2 class="hero-title">Ask anything about <span>6,780+ Indian Colleges</span></h2>
+                <p class="hero-desc">
+                  Get instant data-driven answers on fees, placements, admission cutoffs, rankings, and compare colleges side-by-side.
+                </p>
+
+                <div class="quick-chips-group">
+                  <button class="chip-btn" onclick="sendPresetQuery('Which are the top 5 engineering colleges in Maharashtra by placement?')">
+                    📍 Top Engineering in Maharashtra
+                  </button>
+                  <button class="chip-btn" onclick="sendPresetQuery('Find low fee pharmacy colleges in Kerala')">
+                    💊 Low Fee Pharmacy in Kerala
+                  </button>
+                  <button class="chip-btn" onclick="sendPresetQuery('Compare B.Tech vs BCA career prospects and average packages')">
+                    ⚖️ B.Tech vs BCA Career ROI
+                  </button>
+                  <button class="chip-btn" onclick="sendPresetQuery('Colleges with highest placement ratings in Karnataka')">
+                    🏆 Top Placements in Karnataka
+                  </button>
+                </div>
+              </div>
+
+              <!-- Message History Container -->
+              <div id="messages-container" class="messages-container"></div>
+
+              <!-- Thinking Indicator -->
+              <div class="thinking-box" id="thinking-box">
+                <div class="spinner"></div>
+                <div class="thinking-text" id="thinking-status">Searching institutional database & formulating advice...</div>
+              </div>
+
+              <!-- Scroll Anchor -->
+              <div id="scroll-anchor" style="height: 30px; min-height: 30px; pointer-events: none;"></div>
+
+            </div>
+
+            <!-- Fixed Input Dock -->
+            <div class="input-dock">
+              <form id="chat-form">
+                <div class="input-container">
+                  <textarea id="chat-input" class="chat-textarea" placeholder="Ask about any college, stream, fees, placement packages, or comparisons..." rows="1"></textarea>
+                  <button type="submit" class="send-button" id="send-btn" title="Send Message">
+                    <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
+                <div class="input-hint">
+                  <span>⚡ Fast Streaming Active • Press <kbd>Enter</kbd> to send, <kbd>Shift + Enter</kbd> for new line</span>
+                </div>
+              </form>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           VIEW 2: COLLEGE DIRECTORY
+           ==================================================================== -->
+      <div class="tab-pane" id="matrix-pane">
+        <div class="matrix-layout">
+          <div class="matrix-header">
+            <div class="matrix-title">
+              <h2>College Directory</h2>
+              <p>Explore and filter verified institutions across all states and streams</p>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span id="dir-count-lbl" style="font-size:12px; color:var(--text-muted); font-weight:600;">Showing institutions</span>
+              <div class="view-modes-group">
+                <button class="view-mode-btn active" id="view-mode-grid" title="Grid View">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  Grid
+                </button>
+                <button class="view-mode-btn" id="view-mode-list" title="List View">
+                  <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  List
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Faceted Filters -->
+          <div class="filter-bar">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="dir-search" class="form-control" placeholder="Search college name, city or keyword..." />
+            </div>
+
+            <select id="dir-stream" class="form-select">
+              <option value="">All Streams</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Medical">Medical</option>
+              <option value="Management">Management</option>
+              <option value="Law">Law</option>
+              <option value="Science">Science</option>
+              <option value="Commerce">Commerce</option>
+              <option value="Arts">Arts</option>
+              <option value="Pharmacy">Pharmacy</option>
+              <option value="Agriculture">Agriculture</option>
+              <option value="Hotel-management">Hotel Management</option>
+            </select>
+
+            <select id="dir-state" class="form-select">
+              <option value="">All States</option>
+              <option value="Tamil nadu">Tamil Nadu</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Delhi ncr">Delhi NCR</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Andhra pradesh">Andhra Pradesh</option>
+              <option value="Uttar pradesh">Uttar Pradesh</option>
+              <option value="West bengal">West Bengal</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Madhya pradesh">Madhya Pradesh</option>
+            </select>
+
+            <select id="dir-sort" class="form-select">
+              <option value="rating-desc">Sort: Highest Rating</option>
+              <option value="placement-desc">Sort: Highest Placement</option>
+              <option value="fee-asc">Sort: Lowest Tuition Fee</option>
+              <option value="name-asc">Sort: Name (A-Z)</option>
+            </select>
+
+            <button class="btn-primary" onclick="loadDirectoryColleges()">
+              Search
+            </button>
+          </div>
+
+          <!-- Dynamic Results -->
+          <div class="colleges-grid" id="matrix-results-grid"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- College Detail Modal -->
+  <div class="modal-backdrop" id="college-detail-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="closeModal()" title="Close">✕</button>
+      <div id="modal-college-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Client Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
