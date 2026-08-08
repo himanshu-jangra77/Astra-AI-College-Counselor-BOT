@@ -1,4 +1,4 @@
-import os, sys, re, json, sqlite3, requests, tempfile
+import os, sys, re, json, sqlite3, requests, tempfile, time
 import pandas as pd
 from typing import Optional, List, Dict, Any, Generator
 from dotenv import load_dotenv
@@ -578,11 +578,12 @@ def chat_stream(message: str = Query(...), fast_mode: bool = Query(False), model
             if has_tokens:
                 return
 
-        # If offline or API fails, stream local synthesis instantly
+        # If offline or API fails, stream local synthesis smoothly
         synth = generate_local_synthesis(q, college_data, is_comparison)
         words = re.findall(r'\S+|\n', synth)
         for w in words:
             yield f"data: {json.dumps({'token': w + (' ' if not w.endswith('\n') else '')})}\n\n"
+            time.sleep(0.006)
         yield f"data: {json.dumps({'done': True})}\n\n"
 
     return StreamingResponse(

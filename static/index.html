@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
   <title>ASTRA — Higher Education AI Counselor & College Directory</title>
   <meta name="description" content="Enterprise AI-powered admission counseling and verified higher education directory." />
   
@@ -38,8 +39,8 @@
           </div>
         </div>
         <div class="brand-info">
-          <h1>ASTRA <span class="brand-tag">AI Counselor</span></h1>
-          <p class="brand-subtitle">Higher Education Intelligence & College Directory</p>
+          <h1>ASTRA <span class="brand-tag hide-xs">AI Counselor</span></h1>
+          <p class="brand-subtitle hide-mobile">Higher Education Intelligence & College Directory</p>
         </div>
       </div>
 
@@ -47,24 +48,24 @@
       <nav class="nav-tabs">
         <button class="nav-tab active" data-tab="chat-pane" id="tab-btn-chat">
           <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          AI Chatbot
+          <span class="nav-tab-label">AI Chat</span>
         </button>
         <button class="nav-tab" data-tab="matrix-pane" id="tab-btn-matrix">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          College Directory
+          <span class="nav-tab-label">Directory</span>
         </button>
       </nav>
 
       <!-- Header Actions -->
       <div class="header-actions">
-        <div class="status-pill" title="Live Database Connection Active">
+        <div class="status-pill hide-tablet" title="Live Database Connection Active">
           <div class="status-dot"></div>
-          <span>6,780+ Colleges Online</span>
+          <span>6,780+ Colleges</span>
         </div>
 
         <button class="header-btn danger" id="reset-session-btn" title="Clear Chat History">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          Clear Chat
+          <span class="btn-text hide-mobile">Clear Chat</span>
         </button>
       </div>
     </header>
@@ -156,7 +157,7 @@
             <div class="input-dock">
               <form id="chat-form">
                 <div class="input-container">
-                  <textarea id="chat-input" class="chat-textarea" placeholder="Ask about any college, stream, fees, placement packages, or comparisons..." rows="1"></textarea>
+                  <textarea id="chat-input" class="chat-textarea" placeholder="Ask about colleges, cutoffs, fees, placements..." rows="1"></textarea>
                   <button type="submit" class="send-button" id="send-btn" title="Send Message">
                     <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   </button>

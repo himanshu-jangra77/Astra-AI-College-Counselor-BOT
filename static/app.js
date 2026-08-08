@@ -51,7 +51,47 @@ const DOM = {
   toastContainer: document.getElementById('toast-container')
 };
 
-// ── 3. TOAST NOTIFICATIONS ──────────────────────────────────────────────────
+// ── 3. MARKED CONFIGURATION & PLUGINS ───────────────────────────────────────
+function setupMarked() {
+  if (typeof marked !== 'undefined') {
+    const renderer = new marked.Renderer();
+    const origTable = renderer.table.bind(renderer);
+    renderer.table = function(headerOrToken, body) {
+      if (typeof headerOrToken === 'object' && headerOrToken !== null && headerOrToken.header) {
+        const renderCell = (cell) => {
+          let text = cell.text || '';
+          return (typeof marked.parseInline === 'function') ? marked.parseInline(text) : text;
+        };
+        let hHtml = headerOrToken.header.map(c => `<th>${renderCell(c)}</th>`).join('');
+        let bHtml = (headerOrToken.rows || []).map(r => `<tr>${r.map(c => `<td>${renderCell(c)}</td>`).join('')}</tr>`).join('');
+        return `<div class="table-responsive"><table><thead><tr>${hHtml}</tr></thead><tbody>${bHtml}</tbody></table></div>`;
+      }
+      const raw = origTable(headerOrToken, body);
+      return `<div class="table-responsive">${raw}</div>`;
+    };
+    marked.use({ renderer });
+    marked.setOptions({
+      gfm: true,
+      breaks: true
+    });
+  }
+}
+setupMarked();
+
+function ensureTableResponsiveness(container) {
+  if (!container) return;
+  const tables = container.querySelectorAll('table');
+  tables.forEach(t => {
+    if (!t.parentElement || !t.parentElement.classList.contains('table-responsive')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-responsive';
+      t.parentNode.insertBefore(wrapper, t);
+      wrapper.appendChild(t);
+    }
+  });
+}
+
+// ── 4. TOAST NOTIFICATIONS ──────────────────────────────────────────────────
 function showToast(msg, type = 'info') {
   if (!DOM.toastContainer) return;
   const toast = document.createElement('div');
@@ -68,7 +108,7 @@ function showToast(msg, type = 'info') {
   }, 3200);
 }
 
-// ── 4. TAB NAVIGATION ───────────────────────────────────────────────────────
+// ── 5. TAB NAVIGATION ───────────────────────────────────────────────────────
 function initNavigation() {
   DOM.navTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -92,17 +132,82 @@ function switchTab(paneId) {
   }
 }
 
-// ── 5. SCROLL HELPER (SMOOTH & PINNED) ───────────────────────────────────────
-function scrollToBottom() {
+// ── 6. SCROLL HELPER (SMOOTH, PINNED & ZERO LAYOUT THRASHING) ────────────────
+let isUserScrolledUp = false;
+if (DOM.chatFeed) {
+  DOM.chatFeed.addEventListener('scroll', () => {
+    const distFromBottom = DOM.chatFeed.scrollHeight - DOM.chatFeed.scrollTop - DOM.chatFeed.clientHeight;
+    isUserScrolledUp = distFromBottom > 160;
+  }, { passive: true });
+}
+
+function smartScrollToBottom(force = false) {
   if (!DOM.chatFeed) return;
-  // Instant scroll directly to bottom so the user does not need to scroll
-  DOM.chatFeed.scrollTop = DOM.chatFeed.scrollHeight;
-  if (DOM.scrollAnchor) {
-    DOM.scrollAnchor.scrollIntoView({ behavior: 'auto', block: 'end' });
+  if (force || !isUserScrolledUp) {
+    DOM.chatFeed.scrollTop = DOM.chatFeed.scrollHeight;
   }
 }
 
-// ── 6. REAL-TIME STREAMING AI COUNSELOR CHAT ────────────────────────────────
+function scrollToBottom() {
+  smartScrollToBottom(true);
+}
+
+// ── 7. ULTRA-FAST RAF STREAMING RENDER ENGINE (NO LAG / NO JANK) ────────────
+class StreamRenderer {
+  constructor(containerElement) {
+    this.container = containerElement;
+    this.accumulatedText = '';
+    this.rafId = null;
+    this.dirty = false;
+  }
+
+  append(token) {
+    this.accumulatedText += token;
+    this.dirty = true;
+    if (!this.rafId) {
+      this.rafId = requestAnimationFrame(this.renderTick.bind(this));
+    }
+  }
+
+  renderTick() {
+    if (this.dirty) {
+      if (typeof marked !== 'undefined') {
+        this.container.innerHTML = marked.parse(this.accumulatedText);
+        ensureTableResponsiveness(this.container);
+      } else {
+        this.container.textContent = this.accumulatedText;
+      }
+      this.dirty = false;
+      smartScrollToBottom(false);
+    }
+
+    if (state.isGenerating) {
+      this.rafId = requestAnimationFrame(this.renderTick.bind(this));
+    } else {
+      this.rafId = null;
+    }
+  }
+
+  finish(finalText = null) {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    if (finalText !== null) {
+      this.accumulatedText = finalText;
+    }
+    if (typeof marked !== 'undefined') {
+      this.container.innerHTML = marked.parse(this.accumulatedText);
+      ensureTableResponsiveness(this.container);
+    } else {
+      this.container.textContent = this.accumulatedText;
+    }
+    this.dirty = false;
+    smartScrollToBottom(true);
+  }
+}
+
+// ── 8. REAL-TIME STREAMING AI COUNSELOR CHAT ────────────────────────────────
 function initChat() {
   if (!DOM.chatForm) return;
 
@@ -157,6 +262,7 @@ async function submitCounselorQuery(queryText) {
 
   state.isGenerating = true;
   DOM.sendBtn.disabled = true;
+  isUserScrolledUp = false;
 
   // 2. Thinking indicator
   DOM.thinkingBox.style.display = 'flex';
@@ -167,7 +273,7 @@ async function submitCounselorQuery(queryText) {
   const { row, mdContainer, setFinalActions } = createAiMessageStreamRow();
   DOM.messagesContainer.appendChild(row);
 
-  let accumulatedText = '';
+  const streamRenderer = new StreamRenderer(mdContainer);
   let receivedFirstToken = false;
 
   try {
@@ -201,20 +307,16 @@ async function submitCounselorQuery(queryText) {
           if (data.type === 'meta') {
             if (data.matched_colleges > 0) {
               DOM.thinkingStatus.textContent = `Found ${data.matched_colleges} matching institutions. Formulating response...`;
-              scrollToBottom();
+              smartScrollToBottom(false);
             }
           } else if (data.token) {
             if (!receivedFirstToken) {
               receivedFirstToken = true;
               DOM.thinkingBox.style.display = 'none';
             }
-            accumulatedText += data.token;
-            mdContainer.innerHTML = marked.parse(accumulatedText);
-            // Automatic pinned scroll as AI streams
-            scrollToBottom();
+            streamRenderer.append(data.token);
           } else if (data.done) {
             DOM.thinkingBox.style.display = 'none';
-            scrollToBottom();
           }
         } catch (err) {
           // Non-JSON line
@@ -222,12 +324,13 @@ async function submitCounselorQuery(queryText) {
       }
     }
 
-    if (!accumulatedText) {
-      accumulatedText = "No response generated. Please try asking again.";
-      mdContainer.innerHTML = marked.parse(accumulatedText);
+    if (!streamRenderer.accumulatedText) {
+      streamRenderer.finish("No response generated. Please try asking again.");
+    } else {
+      streamRenderer.finish();
     }
 
-    setFinalActions(accumulatedText);
+    setFinalActions(streamRenderer.accumulatedText);
 
   } catch (err) {
     console.error('Stream error:', err);
@@ -246,23 +349,25 @@ async function submitCounselorQuery(queryText) {
       });
       const data = await fallbackRes.json();
       DOM.thinkingBox.style.display = 'none';
-      accumulatedText = data.response || '⚠️ Unable to process query.';
-      mdContainer.innerHTML = marked.parse(accumulatedText);
-      setFinalActions(accumulatedText);
+      const fallbackText = data.response || '⚠️ Unable to process query.';
+      streamRenderer.finish(fallbackText);
+      setFinalActions(fallbackText);
       scrollToBottom();
     } catch (fallbackErr) {
       DOM.thinkingBox.style.display = 'none';
-      accumulatedText = `⚠️ **Connection Error**: Unable to reach backend server. Please verify the server is running on http://localhost:8000.`;
-      mdContainer.innerHTML = marked.parse(accumulatedText);
-      setFinalActions(accumulatedText);
+      const errText = `⚠️ **Connection Error**: Unable to reach backend server. Please verify the server is running on http://localhost:8000.`;
+      streamRenderer.finish(errText);
+      setFinalActions(errText);
       scrollToBottom();
     }
   } finally {
     DOM.thinkingBox.style.display = 'none';
     state.isGenerating = false;
     DOM.sendBtn.disabled = false;
-    DOM.chatInput.focus();
-    scrollToBottom();
+    if (window.innerWidth > 768) {
+      DOM.chatInput.focus();
+    }
+    smartScrollToBottom(true);
   }
 }
 
